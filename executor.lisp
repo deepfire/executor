@@ -78,7 +78,7 @@
                          &aux (pathname (etypecase name
                                           (string (find-executable name))
                                           (pathname name)
-                                          (keyword (executable name)))))
+                                          (symbol (executable name)))))
   "Run an external program at PATHNAME with PARAMETERS. 
 Return a value associated with the exit code, by the means of
 VALID-EXIT-CODES, or signal a condition of type EXECUTABLE-FAILURE."
