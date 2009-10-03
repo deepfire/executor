@@ -146,3 +146,6 @@ VALID-EXIT-CODES, or signal a condition of type EXECUTABLE-FAILURE."
                                         (case (cond-status cond)
                                           ,@bindings))))
      ,@body))
+
+(defmacro with-shell-predicate (form)
+  `(with-valid-exit-codes ((1 nil)) ,form))

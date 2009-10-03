@@ -25,4 +25,5 @@
    #:define-executable
    #:with-valid-exit-codes
    #:with-exit-code-to-error-translation
-   #:exit-code-bind))
+   #:exit-code-bind
+   #:with-shell-predicate))
