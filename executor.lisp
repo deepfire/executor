@@ -24,7 +24,7 @@
 
 (defparameter *executables* (make-hash-table :test 'eq))
 
-(define-container-hash-accessor *executables* executable :type pathname)
+(define-root-container *executables* executable :type pathname)
 
 (defvar *execute-verbosely* nil
   "Whether to echo the invoked external programs to standard output.")
