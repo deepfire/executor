@@ -120,6 +120,8 @@ VALID-EXIT-CODES, or signal a condition of type EXECUTABLE-FAILURE."
        (let (environment)
          (declare (ignorable environment))
          (with-retry-restarts ((retry () :report "Retry execution of the external program.")
+                               (accept () :report "Accept results of external program execution as successful."
+                                      (return-from ,name t))
                                ,@(when may-want-display
                                        `((retry (display)
                                                 :report "Retry execution of the external program with DISPLAY set."
