@@ -118,13 +118,9 @@ VALID-EXIT-CODES, or signal a condition of type EXECUTABLE-FAILURE."
   (with-gensyms (block str)
     `(block ,block
        (with-output-to-string (,str)
-         (execute-external ,name ,params :output ,str)
+         (execute-external ,name ,params :output ,str (when (boundp '*explanation*) *explanation*))
          (with-input-from-string (,stream-var (get-output-stream-string ,str))
            (return-from ,block (progn ,@body)))))))
-
-(defun execution-output-string (name &rest params)
-  (with-output-to-string (str)
-    (execute-external name params :output str)))
 
 (defvar *valid-exit-codes* nil)
 (defvar *translated-error-exit-codes* nil)
@@ -135,6 +131,10 @@ VALID-EXIT-CODES, or signal a condition of type EXECUTABLE-FAILURE."
   "Execute BODY with *EXPLANATION* bound to EXPLANATION."
   `(let ((*explanation* ,(if (consp explanation) `(list ,@explanation) explanation)))
      ,@body))
+
+(defun execution-output-string (name &rest params)
+  (with-output-to-string (str)
+    (execute-external name params :output str :explanation (when (boundp '*explanation*) *explanation*))))
 
 (defmacro define-executable (name &key may-want-display)
   `(progn
