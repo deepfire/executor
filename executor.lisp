@@ -26,12 +26,17 @@
 
 (define-root-container *executables* executable :type pathname)
 
+(defvar *execute-explanatory* nil
+  "Whether to print provided explanations while executing.")
+
 (defvar *execute-verbosely* nil
-  "Whether to echo the invoked external programs to standard output.")
+  "Whether to echo the invoked external programs to standard output.
+Implies *EXECUTE-EXPLANATORY*.")
 
 (defvar *execute-dryly* nil
   "Whether to substitute actual execution of external programs with
-   mere printing of their paths and parameters.")
+mere printing of their paths and parameters.
+Implies *EXECUTE-VERBOSELY*")
 
 (define-reported-condition executable-failure (serious-condition)
   ((program :accessor cond-program :initarg :program)
@@ -74,7 +79,14 @@
      (declare (special *execute-verbosely*))
      ,@body))
 
+(defmacro with-explained-execution (&body body)
+  "Execute BODY with *EXECUTE-EXPLANATORY* bound to T."
+  `(let ((*execute-explanatory* t))
+     (declare (special *execute-explanatory*))
+     ,@body))
+
 (defun execute-external (name parameters &key (valid-exit-codes (acons 0 t nil)) translated-error-exit-codes (output nil) (environment '("HOME=/tmp"))
+                         explanation
                          &aux (pathname (etypecase name
                                           (string (find-executable name))
                                           (pathname name)
@@ -88,7 +100,10 @@ VALID-EXIT-CODES, or signal a condition of type EXECUTABLE-FAILURE."
            (finish-output stream)))
     (let* ((final-output (or output (make-string-output-stream)))
            (exit-code (progn
-                        (when (or *execute-dryly* *execute-verbosely*)
+                        (when (or *execute-explanatory* *execute-verbosely* *execute-dryly*)
+                          (destructuring-bind (format-control &rest format-arguments) (ensure-cons explanation)
+                            (apply #'format *standard-output* (concatenate 'string ";;; " format-control "~%") format-arguments)))
+                        (when (or *execute-verbosely* *execute-dryly*)
                           (note-execution *standard-output*))
                         (if *execute-dryly*
                             (caar valid-exit-codes)
@@ -114,6 +129,13 @@ VALID-EXIT-CODES, or signal a condition of type EXECUTABLE-FAILURE."
 (defvar *valid-exit-codes* nil)
 (defvar *translated-error-exit-codes* nil)
 
+(defvar *explanation*)
+
+(defmacro with-explanation (explanation &body body)
+  "Execute BODY with *EXPLANATION* bound to EXPLANATION."
+  `(let ((*explanation* ,(if (consp explanation) `(list ,@explanation) explanation)))
+     ,@body))
+
 (defmacro define-executable (name &key may-want-display)
   `(progn
      (defun ,name (&rest parameters)
@@ -131,6 +153,7 @@ VALID-EXIT-CODES, or signal a condition of type EXECUTABLE-FAILURE."
                                                                (list (read-line *query-io*)))
                                                 (push (concatenate 'string "DISPLAY=" display) environment)))))
            (apply #'execute-external ',name parameters
+                  :explanation (when (boundp '*explanation*) *explanation*)
                   :valid-exit-codes (acons 0 t *valid-exit-codes*)
                   :translated-error-exit-codes *translated-error-exit-codes*
                   (when environment (list :environment environment))))))))

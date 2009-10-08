@@ -8,6 +8,7 @@
   (:export
    ;; tunables
    #:*search-path*
+   #:*execute-explanatory*
    #:*execute-verbosely*
    #:*execute-dryly*
    ;; conditions
@@ -17,9 +18,11 @@
    ;; functions and macros
    #:executable
    #:find-executable
-   #:with-dry-execution
+   #:with-explained-execution
    #:with-verbose-execution
+   #:with-dry-execution
    #:execute-external
+   #:with-explanation
    #:with-input-from-execution
    #:execution-output-string
    #:define-executable
