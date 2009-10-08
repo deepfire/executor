@@ -44,7 +44,7 @@ Implies *EXECUTE-VERBOSELY*")
    (status :accessor cond-status :initarg :status)
    (output :accessor cond-output :initarg :output))
   (:report (program parameters status output)
-           "~@<running ~A~{ ~A~} failed with exit status ~S~:[~;, output:~@:_~:*~@<...~;~A~:@>~]~%~:@>" program parameters status output))
+           "~@<running ~A~{ ~S~} failed with exit status ~S~:[~;, output:~@:_~:*~@<...~;~A~:@>~]~%~:@>" program parameters status output))
 
 (define-reported-condition executable-not-found (warning)
   ((name :accessor cond-name :initarg :name)
