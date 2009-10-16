@@ -96,7 +96,7 @@ Return a value associated with the exit code, by the means of
 VALID-EXIT-CODES, or signal a condition of type EXECUTABLE-FAILURE."
   (declare (special *execute-dryly*))
   (flet ((note-execution (stream)
-           (format stream ";;; ~S~{ ~S~}~%" pathname parameters)
+           (format stream ";;; ~S '~S~%" pathname parameters)
            (finish-output stream)))
     (let* ((final-output (or output (make-string-output-stream)))
            (exit-code (progn
