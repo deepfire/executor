@@ -98,7 +98,7 @@ VALID-EXIT-CODES, or signal a condition of type EXECUTABLE-FAILURE."
   (flet ((note-execution (stream)
            (format stream ";;; ~S '~S~% :environment '~S :output ~S" pathname parameters environment output)
            (finish-output stream)))
-    (let* ((final-output (or output (make-string-output-stream)))
+    (let* ((final-output (or output (make-string-output-stream :element-type 'base-character)))
            (exit-code (progn
                         (when (or *execute-explanatory* *execute-verbosely* *execute-dryly*)
                           (destructuring-bind (format-control &rest format-arguments) (ensure-cons explanation)
