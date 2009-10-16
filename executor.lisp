@@ -118,8 +118,9 @@ following interpretation of the latter three:
                              (sb-ext:process-exit-code (sb-ext:run-program pathname parameters :output final-output :environment environment))))))
         (cdr (or (assoc exit-code valid-exit-codes)
                  (when-let ((error (assoc exit-code translated-error-exit-codes)))
-                   (apply #'error (list* :program pathname :parameters parameters :status exit-code :output (if capturep (get-output-stream-string final-output) "#<not captured>")
-                                         (cdr error))))
+                   (destructuring-bind (type &rest error-initargs) (rest error)
+                     (apply #'error type (list* :program pathname :parameters parameters :status exit-code :output (if capturep (get-output-stream-string final-output) "#<not captured>")
+                                                error-initargs))))
                  (error 'executable-failure :program pathname :parameters parameters :status exit-code :output (if capturep (get-output-stream-string final-output) "#<not captured>"))))))))
 
 (defmacro with-input-from-execution ((stream-var name params) &body body)
