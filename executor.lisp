@@ -124,8 +124,9 @@ VALID-EXIT-CODES, or signal a condition of type EXECUTABLE-FAILURE."
 
 (defvar *valid-exit-codes* nil)
 (defvar *translated-error-exit-codes* nil)
-
+(defvar *environment* '("HOME=/tmp"))
 (defvar *explanation*)
+(defvar *inhibit-standard-output* t)
 
 (defmacro with-explanation (explanation &body body)
   "Execute BODY with *EXPLANATION* bound to EXPLANATION."
@@ -136,14 +137,28 @@ VALID-EXIT-CODES, or signal a condition of type EXECUTABLE-FAILURE."
   (with-output-to-string (str)
     (execute-external name params :output str :explanation (when (boundp '*explanation*) *explanation*))))
 
-(defmacro define-executable (name &key may-want-display)
+(defmacro without-suppressing-executable-output (&body body)
+  "Execute BODY without inhibiting standard output from executables."
+  `(let ((*inhibit-standard-output* nil))
+     ,@body))
+
+(defmacro with-environment (environment &body body)
+  "Execute BODY with process variable environment set to ENVIRONMENT."
+  `(let ((*environment* ,environment))
+     ,@body))
+
+(defmacro with-environment-extension (extension &body body)
+  "Execute BODY with process variable environment prepended with EXTENSION."
+  `(let ((*environment* (append ,extension *environment*)))
+     ,@body))
+
+(defmacro define-executable (name &key may-want-display fixed-environment)
   `(progn
      (defun ,name (&rest parameters)
-       (let (environment)
-         (declare (ignorable environment))
+       (let ((environment ,(if fixed-environment `',fixed-environment '*environment*)))
          (with-retry-restarts ((retry () :report "Retry execution of the external program.")
                                (accept () :report "Accept results of external program execution as successful."
-                                      (return-from ,name t))
+                                       (return-from ,name t))
                                ,@(when may-want-display
                                        `((retry (display)
                                                 :report "Retry execution of the external program with DISPLAY set."
@@ -156,6 +171,7 @@ VALID-EXIT-CODES, or signal a condition of type EXECUTABLE-FAILURE."
                   :explanation (when (boundp '*explanation*) *explanation*)
                   :valid-exit-codes (acons 0 t *valid-exit-codes*)
                   :translated-error-exit-codes *translated-error-exit-codes*
+                  :output (not *inhibit-standard-output*)
                   (when environment (list :environment environment))))))))
 
 (defmacro with-valid-exit-codes ((&rest bindings) &body body)

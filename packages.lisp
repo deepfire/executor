@@ -23,7 +23,9 @@
    #:with-dry-execution
    #:execute-external
    #:with-explanation
+   #:without-suppressing-executable-output
    #:with-input-from-execution
+   #:with-environment #:with-environment-extension
    #:execution-output-string
    #:define-executable
    #:with-valid-exit-codes
