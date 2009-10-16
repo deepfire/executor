@@ -105,7 +105,7 @@ following interpretation of the latter three:
            (finish-output stream)))
     (multiple-value-bind (final-output capturep)
         (cond ((typep output '(or boolean stream)) output)
-              ((eq output :capture) (values (make-string-output-stream :element-type 'base-character) t))
+              ((eq output :capture) (values (make-string-output-stream) t))
               (t (error "~@<Bad OUTPUT passed to EXECUTE-EXTERNAL: should be either a stream, or one of (T NIL :CAPTURE).~:@>")))
       (let ((exit-code (progn
                          (when (or *execute-explanatory* *execute-verbosely* *execute-dryly*)
