@@ -101,7 +101,7 @@ following interpretation of the latter three:
    :CAPTURE - capture into a string."
   (declare (special *execute-dryly*))
   (flet ((note-execution (stream)
-           (format stream ";;; ~S '~S~% :environment '~S :output ~S" pathname parameters environment output)
+           (format stream ";;; ~S '~S~% :environment '~S :output ~S~%" pathname parameters environment output)
            (finish-output stream)))
     (multiple-value-bind (final-output capturep)
         (cond ((typep output '(or boolean stream)) output)
