@@ -93,26 +93,34 @@ Implies *EXECUTE-VERBOSELY*")
                                           (symbol (executable name)))))
   "Run an external program at PATHNAME with PARAMETERS. 
 Return a value associated with the exit code, by the means of
-VALID-EXIT-CODES, or signal a condition of type EXECUTABLE-FAILURE."
+VALID-EXIT-CODES, or signal a condition of type EXECUTABLE-FAILURE.
+OUTPUT should be either a stream, T, NIL or :CAPTURE, with
+following interpretation of the latter three:
+   T - *STANDARD-OUTPUT*,
+   NIL - /dev/null, nul or whatever is the name of the local void,
+   :CAPTURE - capture into a string."
   (declare (special *execute-dryly*))
   (flet ((note-execution (stream)
            (format stream ";;; ~S '~S~% :environment '~S :output ~S" pathname parameters environment output)
            (finish-output stream)))
-    (let* ((final-output (or output (make-string-output-stream :element-type 'base-character)))
-           (exit-code (progn
-                        (when (or *execute-explanatory* *execute-verbosely* *execute-dryly*)
-                          (destructuring-bind (format-control &rest format-arguments) (ensure-cons explanation)
-                            (apply #'format *standard-output* (concatenate 'string ";;; " format-control "~%") format-arguments)))
-                        (when (or *execute-verbosely* *execute-dryly*)
-                          (note-execution *standard-output*))
-                        (if *execute-dryly*
-                            (caar valid-exit-codes)
-                            (sb-ext:process-exit-code (sb-ext:run-program pathname parameters :output final-output :environment environment))))))
-      (cdr (or (assoc exit-code valid-exit-codes)
-               (when-let ((error (assoc exit-code translated-error-exit-codes)))
-                 (apply #'error (list* :program pathname :parameters parameters :status exit-code :output (get-output-stream-string final-output)
-                                       (cdr error))))
-               (error 'executable-failure :program pathname :parameters parameters :status exit-code :output (get-output-stream-string final-output)))))))
+    (multiple-value-bind (final-output capturep)
+        (cond ((typep output '(or boolean stream)) output)
+              ((eq output :capture) (values (make-string-output-stream :element-type 'base-character) t))
+              (t (error "~@<Bad OUTPUT passed to EXECUTE-EXTERNAL: should be either a stream, or one of (T NIL :CAPTURE).~:@>")))
+      (let ((exit-code (progn
+                         (when (or *execute-explanatory* *execute-verbosely* *execute-dryly*)
+                           (destructuring-bind (format-control &rest format-arguments) (ensure-cons explanation)
+                             (apply #'format *standard-output* (concatenate 'string ";;; " format-control "~%") format-arguments)))
+                         (when (or *execute-verbosely* *execute-dryly*)
+                           (note-execution *standard-output*))
+                         (if *execute-dryly*
+                             (caar valid-exit-codes)
+                             (sb-ext:process-exit-code (sb-ext:run-program pathname parameters :output final-output :environment environment))))))
+        (cdr (or (assoc exit-code valid-exit-codes)
+                 (when-let ((error (assoc exit-code translated-error-exit-codes)))
+                   (apply #'error (list* :program pathname :parameters parameters :status exit-code :output (if capturep (get-output-stream-string final-output) "#<not captured>")
+                                         (cdr error))))
+                 (error 'executable-failure :program pathname :parameters parameters :status exit-code :output (if capturep (get-output-stream-string final-output) "#<not captured>"))))))))
 
 (defmacro with-input-from-execution ((stream-var name params) &body body)
   (with-gensyms (block str)
@@ -126,7 +134,7 @@ VALID-EXIT-CODES, or signal a condition of type EXECUTABLE-FAILURE."
 (defvar *translated-error-exit-codes* nil)
 (defvar *environment* '("HOME=/tmp"))
 (defvar *explanation*)
-(defvar *inhibit-standard-output* t)
+(defvar *standard-output-direction* :capture)
 
 (defmacro with-explanation (explanation &body body)
   "Execute BODY with *EXPLANATION* bound to EXPLANATION."
@@ -137,9 +145,19 @@ VALID-EXIT-CODES, or signal a condition of type EXECUTABLE-FAILURE."
   (with-output-to-string (str)
     (execute-external name params :output str :explanation (when (boundp '*explanation*) *explanation*))))
 
-(defmacro without-suppressing-executable-output (&body body)
-  "Execute BODY without inhibiting standard output from executables."
-  `(let ((*inhibit-standard-output* nil))
+(defmacro without-captured-executable-output (&body body)
+  "Execute BODY without capturing standard output from executables."
+  `(let ((*standard-output-direction* t))
+     ,@body))
+
+(defmacro with-captured-executable-output (&body body)
+  "Execute BODY while capturing standard output from executables."
+  `(let ((*standard-output-direction* :capture))
+     ,@body))
+
+(defmacro with-avoided-executable-output (&body body)
+  "Execute BODY while avoiding standard output from executables."
+  `(let ((*standard-output-direction* nil))
      ,@body))
 
 (defmacro with-environment (environment &body body)
@@ -171,7 +189,7 @@ VALID-EXIT-CODES, or signal a condition of type EXECUTABLE-FAILURE."
                   :explanation (when (boundp '*explanation*) *explanation*)
                   :valid-exit-codes (acons 0 t *valid-exit-codes*)
                   :translated-error-exit-codes *translated-error-exit-codes*
-                  :output (not *inhibit-standard-output*)
+                  :output *standard-output-direction*
                   (when environment (list :environment environment))))))))
 
 (defmacro with-valid-exit-codes ((&rest bindings) &body body)

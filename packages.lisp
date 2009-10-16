@@ -23,7 +23,7 @@
    #:with-dry-execution
    #:execute-external
    #:with-explanation
-   #:without-suppressing-executable-output
+   #:*standard-output-direction* #:with-captured-executable-output #:without-captured-executable-output #:with-avoided-executable-output
    #:with-input-from-execution
    #:with-environment #:with-environment-extension
    #:execution-output-string
