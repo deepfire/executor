@@ -171,11 +171,16 @@ following interpretation of the latter three:
   `(let ((*environment* (append ,extension *environment*)))
      ,@body))
 
+(defun process-arg (arg)
+  (etypecase arg
+    (pathname (namestring arg))
+    (list (apply #'concatenate 'string (mapcar #'process-arg arg)))
+    (string arg)))
+
 (defmacro define-executable (name &key may-want-display fixed-environment)
   `(progn
      (defun ,name (&rest parameters)
-       (let ((environment ,(if fixed-environment `',fixed-environment '*environment*))
-             (processed-parameters (mapcar (curry #'xform-if #'consp (curry #'apply #'concatenate 'string)) parameters)))
+       (let ((environment ,(if fixed-environment `',fixed-environment '*environment*)))
          (with-retry-restarts ((retry () :report "Retry execution of the external program.")
                                (accept () :report "Accept results of external program execution as successful."
                                        (return-from ,name t))
@@ -187,7 +192,7 @@ following interpretation of the latter three:
                                                                (finish-output *query-io*)
                                                                (list (read-line *query-io*)))
                                                 (push (concatenate 'string "DISPLAY=" display) environment)))))
-           (apply #'execute-external ',name processed-parameters
+           (apply #'execute-external ',name (mapcar #'process-arg parameters)
                   :explanation (when (boundp '*explanation*) *explanation*)
                   :valid-exit-codes (acons 0 t *valid-exit-codes*)
                   :translated-error-exit-codes *translated-error-exit-codes*
