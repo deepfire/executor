@@ -85,7 +85,7 @@ Implies *EXECUTE-VERBOSELY*")
      (declare (special *execute-explanatory*))
      ,@body))
 
-(defun execute-external (name parameters &key (valid-exit-codes (acons 0 t nil)) translated-error-exit-codes (output nil) (environment '("HOME=/tmp"))
+(defun execute-external (name parameters &key (valid-exit-codes (acons 0 t nil)) translated-error-exit-codes (output nil) (input *standard-input*) (environment '("HOME=/tmp"))
                          explanation
                          &aux (pathname (etypecase name
                                           (string (find-executable name))
@@ -119,7 +119,7 @@ following interpretation of the latter three:
                            (note-execution *standard-output*))
                          (if *execute-dryly*
                              (caar valid-exit-codes)
-                             (sb-ext:process-exit-code (sb-ext:run-program pathname parameters :output final-output :environment environment))))))
+                             (sb-ext:process-exit-code (sb-ext:run-program pathname parameters :input input :output final-output :environment environment))))))
         (cdr (or (assoc exit-code valid-exit-codes)
                  (when-let ((error (assoc exit-code translated-error-exit-codes)))
                    (destructuring-bind (type &rest error-initargs) (rest error)
@@ -140,6 +140,7 @@ following interpretation of the latter three:
 (defvar *environment* '("HOME=/tmp"))
 (defvar *explanation*)
 (defvar *standard-output-direction* :capture)
+(defvar *executable-input-stream* nil)
 
 (defmacro with-explanation (explanation &body body)
   "Execute BODY with *EXPLANATION* bound to EXPLANATION."
@@ -175,6 +176,11 @@ following interpretation of the latter three:
   `(let ((*environment* (append ,extension *environment*)))
      ,@body))
 
+(defmacro with-executable-input-stream (stream &body body)
+  "Execute BODY with process input set to STREAM."
+  `(let ((*executable-input-stream* ,stream))
+     ,@body))
+
 (defun process-arg (arg)
   (etypecase arg
     (pathname (namestring arg))
@@ -200,6 +206,7 @@ following interpretation of the latter three:
                   :explanation (when (boundp '*explanation*) *explanation*)
                   :valid-exit-codes (acons 0 t *valid-exit-codes*)
                   :translated-error-exit-codes *translated-error-exit-codes*
+                  :input *executable-input-stream*
                   :output *standard-output-direction*
                   (when environment (list :environment environment))))))))
 
