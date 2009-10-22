@@ -104,9 +104,13 @@ following interpretation of the latter three:
            (format stream ";;; ~S '~S~% :environment '~S :output ~S~%" pathname parameters environment output)
            (finish-output stream)))
     (multiple-value-bind (final-output capturep)
-        (cond ((typep output '(or boolean stream)) output)
-              ((eq output :capture) (values (make-string-output-stream) t))
-              (t (error "~@<Bad OUTPUT passed to EXECUTE-EXTERNAL: should be either a stream, or one of (T NIL :CAPTURE).~:@>")))
+        (if (streamp output)
+            output
+            (case output
+              ((t) *standard-output*)
+              ((nil) nil)
+              (:capture (values (make-string-output-stream) t))
+              (t (error "~@<Bad OUTPUT passed to EXECUTE-EXTERNAL: should be either a stream, or one of (T NIL :CAPTURE).~:@>"))))
       (let ((exit-code (progn
                          (when (or *execute-explanatory* *execute-verbosely* *execute-dryly*)
                            (destructuring-bind (format-control &rest format-arguments) (ensure-cons explanation)
