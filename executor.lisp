@@ -85,7 +85,7 @@ Implies *EXECUTE-VERBOSELY*")
      (declare (special *execute-explanatory*))
      ,@body))
 
-(defun execute-external (name parameters &key (valid-exit-codes (acons 0 t nil)) translated-error-exit-codes (output nil) (input *standard-input*) (environment '("HOME=/tmp"))
+(defun execute-external (name parameters &key (valid-exit-codes (acons 0 t nil)) translated-error-exit-codes (output nil) input (environment '("HOME=/tmp"))
                          explanation
                          &aux (pathname (etypecase name
                                           (string (find-executable name))
