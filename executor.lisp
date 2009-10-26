@@ -138,7 +138,7 @@ following interpretation of the latter three:
 (defvar *valid-exit-codes* nil)
 (defvar *translated-error-exit-codes* nil)
 (defvar *environment* '("HOME=/tmp"))
-(defvar *explanation*)
+(defvar *explanation* '("<unexplained action>"))
 (defvar *standard-output-direction* :capture)
 (defvar *executable-input-stream* nil)
 
