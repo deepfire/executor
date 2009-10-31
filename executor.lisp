@@ -139,7 +139,7 @@ following interpretation of the latter three:
 (defvar *translated-error-exit-codes* nil)
 (defvar *environment* '("HOME=/tmp"))
 (defvar *explanation* '("<unexplained action>"))
-(defvar *standard-output-direction* :capture)
+(defvar *executable-standard-output-direction* :capture)
 (defvar *executable-input-stream* nil)
 
 (defmacro with-explanation (explanation &body body)
@@ -153,17 +153,17 @@ following interpretation of the latter three:
 
 (defmacro without-captured-executable-output (&body body)
   "Execute BODY without capturing standard output from executables."
-  `(let ((*standard-output-direction* t))
+  `(let ((*executable-standard-output-direction* t))
      ,@body))
 
 (defmacro with-captured-executable-output (&body body)
   "Execute BODY while capturing standard output from executables."
-  `(let ((*standard-output-direction* :capture))
+  `(let ((*executable-standard-output-direction* :capture))
      ,@body))
 
 (defmacro with-avoided-executable-output (&body body)
   "Execute BODY while avoiding standard output from executables."
-  `(let ((*standard-output-direction* nil))
+  `(let ((*executable-standard-output-direction* nil))
      ,@body))
 
 (defmacro with-environment (environment &body body)
@@ -207,7 +207,7 @@ following interpretation of the latter three:
                   :valid-exit-codes (acons 0 t *valid-exit-codes*)
                   :translated-error-exit-codes *translated-error-exit-codes*
                   :input *executable-input-stream*
-                  :output *standard-output-direction*
+                  :output *executable-standard-output-direction*
                   (when environment (list :environment environment))))))))
 
 (defmacro with-valid-exit-codes ((&rest bindings) &body body)
