@@ -188,27 +188,28 @@ following interpretation of the latter three:
     (string arg)))
 
 (defmacro define-executable (name &key may-want-display fixed-environment)
-  `(progn
-     (defun ,name (&rest parameters)
-       (let ((environment ,(if fixed-environment `',fixed-environment '*environment*)))
-         (with-retry-restarts ((retry () :report "Retry execution of the external program.")
-                               (accept () :report "Accept results of external program execution as successful."
-                                       (return-from ,name t))
-                               ,@(when may-want-display
-                                       `((retry (display)
-                                                :report "Retry execution of the external program with DISPLAY set."
-                                                :interactive (lambda ()
-                                                               (format *query-io* "Enter value for the DISPLAY variable: ")
-                                                               (finish-output *query-io*)
-                                                               (list (read-line *query-io*)))
-                                                (push (concatenate 'string "DISPLAY=" display) environment)))))
-           (apply #'execute-external ',name (mapcar #'process-arg parameters)
-                  :explanation (when (boundp '*explanation*) *explanation*)
-                  :valid-exit-codes (acons 0 t *valid-exit-codes*)
-                  :translated-error-exit-codes *translated-error-exit-codes*
-                  :input *executable-input-stream*
-                  :output *executable-standard-output-direction*
-                  (when environment (list :environment environment))))))))
+  `(defun ,name (&rest parameters)
+     (let ((environment ,(if fixed-environment `',fixed-environment '*environment*)))
+       (with-retry-restarts ((retry () :report "Retry execution of the external program.")
+                             (accept () :report "Accept results of external program execution as successful. Return T."
+                                     (return-from ,name t))
+                             (fail () :report "Accept results of external program execution as failure. Return NIL."
+                                   (return-from ,name nil))
+                             ,@(when may-want-display
+                                     `((retry (display)
+                                              :report "Retry execution of the external program with DISPLAY set."
+                                              :interactive (lambda ()
+                                                             (format *query-io* "Enter value for the DISPLAY variable: ")
+                                                             (finish-output *query-io*)
+                                                             (list (read-line *query-io*)))
+                                              (push (concatenate 'string "DISPLAY=" display) environment)))))
+         (apply #'execute-external ',name (mapcar #'process-arg parameters)
+                :explanation (when (boundp '*explanation*) *explanation*)
+                :valid-exit-codes (acons 0 t *valid-exit-codes*)
+                :translated-error-exit-codes *translated-error-exit-codes*
+                :input *executable-input-stream*
+                :output *executable-standard-output-direction*
+                (when environment (list :environment environment)))))))
 
 (defmacro with-valid-exit-codes ((&rest bindings) &body body)
   `(let ((*valid-exit-codes* (list ,@(mapcar (curry #'cons 'cons) bindings))))
