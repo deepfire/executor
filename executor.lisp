@@ -122,11 +122,13 @@ following interpretation of the latter three:
                              (sb-ext:process-exit-code (sb-ext:run-program pathname parameters :input input :output final-output :environment environment))))))
         (apply #'values
                (cdr (or (assoc exit-code valid-exit-codes)
-                        (when-let ((error (assoc exit-code translated-error-exit-codes)))
-                          (destructuring-bind (type &rest error-initargs) (rest error)
-                            (apply #'error type (list* :program pathname :parameters parameters :status exit-code :output (if capturep (get-output-stream-string final-output) "#<not captured>")
-                                                       error-initargs))))
-                        (error 'executable-failure :program pathname :parameters parameters :status exit-code :output (if capturep (get-output-stream-string final-output) "#<not captured>"))))
+                        (let ((error-output (if (or capturep (and (typep final-output 'string-stream) (output-stream-p final-output)))
+                                                (get-output-stream-string final-output) "#<not captured>")))
+                          (if-let ((error (assoc exit-code translated-error-exit-codes)))
+                            (destructuring-bind (type &rest error-initargs) (rest error)
+                              (apply #'error type (list* :program pathname :parameters parameters :status exit-code :output error-output
+                                                         error-initargs)))
+                            (error 'executable-failure :program pathname :parameters parameters :status exit-code :output error-output)))))
                (when capturep
                  (list (get-output-stream-string final-output))))))))
 
