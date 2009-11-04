@@ -4,7 +4,7 @@
 
 (defpackage #:executor
   (:nicknames :exec)
-  (:use :common-lisp :alexandria :iterate :pergamum)
+  (:use :common-lisp :alexandria :pergamum)
   (:export
    ;; tunables
    #:*search-path*

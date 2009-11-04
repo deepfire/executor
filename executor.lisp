@@ -61,11 +61,11 @@ Implies *EXECUTE-VERBOSELY*")
 (defun find-executable (name &key (paths *search-path*) &aux (realname (string-downcase (string name))))
   "See if executable with NAME is available in PATHS. When it is, associate NAME with that path and return the latter;
    otherwise, return NIL."
-  (iter (for path in paths)
-        (for exec-path = (subfile path (list realname) #+win32 #+win32 :type "exe"))
-        (when (probe-file exec-path) 
-          (leave (setf (gethash name *executables*) exec-path)))
-        (finally (warn 'executable-not-found :name realname :search-path paths))))
+  (dolist (path paths)
+    (let ((exec-path (subfile path (list realname) #+win32 #+win32 :type "exe")))
+      (when (probe-file exec-path) 
+        (return-from find-executable (setf (gethash name *executables*) exec-path)))))
+  (warn 'executable-not-found :name realname :search-path paths))
 
 (defmacro with-dry-execution (&body body)
   "Execute BODY with *EXECUTE-DRYLY* bound to T."
