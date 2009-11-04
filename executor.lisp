@@ -120,12 +120,15 @@ following interpretation of the latter three:
                          (if *execute-dryly*
                              (caar valid-exit-codes)
                              (sb-ext:process-exit-code (sb-ext:run-program pathname parameters :input input :output final-output :environment environment))))))
-        (cdr (or (assoc exit-code valid-exit-codes)
-                 (when-let ((error (assoc exit-code translated-error-exit-codes)))
-                   (destructuring-bind (type &rest error-initargs) (rest error)
-                     (apply #'error type (list* :program pathname :parameters parameters :status exit-code :output (if capturep (get-output-stream-string final-output) "#<not captured>")
-                                                error-initargs))))
-                 (error 'executable-failure :program pathname :parameters parameters :status exit-code :output (if capturep (get-output-stream-string final-output) "#<not captured>"))))))))
+        (apply #'values
+               (cdr (or (assoc exit-code valid-exit-codes)
+                        (when-let ((error (assoc exit-code translated-error-exit-codes)))
+                          (destructuring-bind (type &rest error-initargs) (rest error)
+                            (apply #'error type (list* :program pathname :parameters parameters :status exit-code :output (if capturep (get-output-stream-string final-output) "#<not captured>")
+                                                       error-initargs))))
+                        (error 'executable-failure :program pathname :parameters parameters :status exit-code :output (if capturep (get-output-stream-string final-output) "#<not captured>"))))
+               (when capturep
+                 (list (get-output-stream-string final-output))))))))
 
 (defmacro with-input-from-execution ((stream-var name params) &body body)
   (with-gensyms (block str)
