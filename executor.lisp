@@ -114,7 +114,7 @@ following interpretation of the latter three:
       (let ((exit-code (progn
                          (when (or *execute-explanatory* *execute-verbosely* *execute-dryly*)
                            (destructuring-bind (format-control &rest format-arguments) (ensure-cons explanation)
-                             (apply #'format *standard-output* (concatenate 'string ";;; " format-control "~%") format-arguments)))
+                             (apply #'format *standard-output* (concatenate 'string "~@<;;; ~@;" format-control "~:@>~%") format-arguments)))
                          (when (or *execute-verbosely* *execute-dryly*)
                            (note-execution *standard-output*))
                          (if *execute-dryly*
