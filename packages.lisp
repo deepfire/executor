@@ -32,4 +32,5 @@
    #:with-valid-exit-codes
    #:with-exit-code-to-error-translation
    #:exit-code-bind
-   #:with-shell-predicate))
+   #:with-shell-predicate
+   #:*execute-asynchronously* #:with-asynchronous-execution #:process-output #:process-wait #:process-alive-p #:process-exit-code))
