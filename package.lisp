@@ -1,10 +1,8 @@
 ;;; -*- Mode: Lisp; indent-tabs-mode: nil -*-
 
-(common-lisp:in-package #:common-lisp-user)
-
-(defpackage #:executor
+(cl:defpackage #:executor
   (:nicknames :exec)
-  (:use :common-lisp :alexandria :pergamum)
+  (:use :common-lisp :alexandria :pergamum :portable-spawn)
   (:export
    ;; tunables
    #:*search-path*
@@ -33,4 +31,10 @@
    #:with-exit-code-to-error-translation
    #:exit-code-bind
    #:with-shell-predicate
-   #:*execute-asynchronously* #:with-asynchronous-execution #:process-output #:process-wait #:process-alive-p #:process-exit-code))
+   #:*execute-asynchronously* #:with-asynchronous-execution
+   ;; remote-executor
+   #:ssh
+   #:compile-shell-command
+   #:invoke-with-captured-external-output-and-status
+   #:run-remote-commands #:watch-remote-commands
+   ))

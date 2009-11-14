@@ -121,7 +121,7 @@ following interpretation of the latter three:
         (values (cdar valid-exit-codes)
                 (when capturep ""))
         (if wait
-            (let ((exit-code (sb-ext:process-exit-code (sb-ext:run-program pathname parameters :input input :output final-output :environment environment))))
+            (let ((exit-code (process-exit-code (spawn-process-from-executable pathname parameters :wait t :input input :output final-output :environment environment))))
               (apply #'values
                      (cdr (or (assoc exit-code valid-exit-codes)
                               (let ((error-output (if (or capturep (and (typep final-output 'string-stream) (output-stream-p final-output)))
@@ -133,19 +133,7 @@ following interpretation of the latter three:
                                   (error 'executable-failure :program pathname :parameters parameters :status exit-code :output error-output)))))
                      (when capturep
                        (list (get-output-stream-string final-output)))))
-            (sb-ext:run-program pathname parameters :wait nil :input input :output final-output :environment environment)))))
-
-(defun process-output (process)
-  (sb-ext:process-output process))
-
-(defun process-wait (process)
-  (sb-ext:process-wait process t))
-
-(defun process-alive-p (process)
-  (sb-ext:process-alive-p process))
-
-(defun process-exit-code (process)
-  (sb-ext:process-exit-code process))
+            (spawn-process-from-executable pathname parameters :wait nil :input input :output final-output :environment environment)))))
 
 (defmacro with-input-from-execution ((stream-var name params) &body body)
   (with-gensyms (block str)

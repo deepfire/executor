@@ -1,12 +1,14 @@
 ;;; -*- Mode: Lisp -*-
 
-(common-lisp:defpackage :executor.system
+(cl:defpackage :executor.system
   (:use :cl :asdf))
 
-(common-lisp:in-package :executor.system)
+(cl:in-package :executor.system)
 
 (defsystem :executor
   :depends-on (:alexandria :pergamum)
   :components
-  ((:file "packages")
-   (:file "executor" :depends-on ("packages"))))
+  ((:file "portable-spawn")
+   (:file "package" :depends-on ("portable-spawn"))
+   (:file "executor" :depends-on ("package"))
+   (:file "remote-executor" :depends-on ("executor"))))
