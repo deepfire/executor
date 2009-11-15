@@ -38,7 +38,7 @@ Implies *EXECUTE-EXPLANATORY*.")
 mere printing of their paths and parameters.
 Implies *EXECUTE-VERBOSELY*")
 
-(define-reported-condition executable-failure (serious-condition)
+(define-reported-condition executable-failure (error)
   ((program :accessor cond-program :initarg :program)
    (parameters :accessor cond-parameters :initarg :parameters)
    (status :accessor cond-status :initarg :status)
