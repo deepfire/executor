@@ -19,29 +19,14 @@
 ;;; Boston, MA  02111-1307  USA.
 
 (cl:defpackage #:portable-spawn
-  (:use :common-lisp)
+  (:use :common-lisp :pergamum)
   (:export
-   ;; belongs to a more basic common-idiom layer
-   #:missing-implementation #:missing-implementation-designator
    ;; execution
    #:spawn-process-from-executable #:process-exit-code #:process-output #:process-wait #:process-alive-p
    ;; pipes
    #:make-pipe-stream #:with-pipe-stream))
 
 (cl:in-package :portable-spawn)
-
-;;;
-;;; Be polite, signal something articulate
-;;;
-(define-condition missing-implementation (program-error)
-  ((missing-designator :accessor missing-implementation-designator :initarg :designator))
-  (:report (lambda (condition stream)
-             (format stream "~@<~A not implemented.~:@>" (missing-implementation-designator condition))))
-  (:default-initargs
-   :designator "Function"))
-
-(defun not-implemented (&optional (designator "Function"))
-  (error 'missing-implementation :designator designator))
 
 ;;;
 ;;; Invocation
