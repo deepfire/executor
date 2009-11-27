@@ -107,7 +107,7 @@ following interpretation of the latter three:
     (destructuring-bind (format-control &rest format-arguments) (ensure-cons explanation)
       (apply #'format *standard-output* (concatenate 'string "~@<;;; ~@;" format-control "~:@>~%") format-arguments)))
   (when (or *execute-verbosely* *execute-dryly*)
-    (format *standard-output* ";;; ~S '~S~% :environment '~S :output ~S~%" pathname parameters environment output)
+    (format *standard-output* "~@<;;; ~@;~S '~S :environment '~S :output ~S~:@>~%" pathname parameters environment output)
     (finish-output *standard-output*))
   (multiple-value-bind (final-output capturep) (if (streamp output)
                                                    output
