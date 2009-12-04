@@ -160,7 +160,7 @@ following interpretation of the latter three:
   (with-output-to-string (str)
     (execute-external name params :output str :explanation (when (boundp '*explanation*) *explanation*))))
 
-(defmacro without-captured-executable-output (&body body)
+(defmacro with-unaffected-executable-output (&body body)
   "Execute BODY without capturing standard output from executables."
   `(let ((*executable-standard-output-direction* t))
      ,@body))

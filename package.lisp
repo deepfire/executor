@@ -21,7 +21,7 @@
    #:with-dry-execution
    #:execute-external
    #:with-explanation
-   #:*executable-standard-output-direction* #:with-captured-executable-output #:without-captured-executable-output #:with-avoided-executable-output
+   #:*executable-standard-output-direction* #:with-captured-executable-output #:with-unaffected-executable-output #:with-avoided-executable-output
    #:with-executable-input-stream
    #:with-input-from-execution
    #:with-environment #:with-environment-extension
