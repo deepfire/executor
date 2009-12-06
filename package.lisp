@@ -29,10 +29,8 @@
    #:with-maybe-captured-executable-output
    #:with-maybe-unaffected-executable-output
    #:with-executable-input-stream
-   #:with-input-from-execution
    #:with-environment
    #:with-environment-extension
-   #:execution-output-string
    #:define-executable
    #:with-valid-exit-codes
    #:with-exit-code-to-error-translation

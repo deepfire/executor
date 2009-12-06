@@ -136,14 +136,6 @@ following interpretation of the latter three:
                        (list (get-output-stream-string final-output)))))
             (spawn-process-from-executable pathname parameters :wait nil :input input :output final-output :environment environment)))))
 
-(defmacro with-input-from-execution ((stream-var name params) &body body)
-  (with-gensyms (block str)
-    `(block ,block
-       (with-output-to-string (,str)
-         (execute-external ,name ,params :output ,str (when (boundp '*explanation*) *explanation*))
-         (with-input-from-string (,stream-var (get-output-stream-string ,str))
-           (return-from ,block (progn ,@body)))))))
-
 (defvar *valid-exit-codes* nil)
 (defvar *translated-error-exit-codes* nil)
 (defvar *environment* '("HOME=/tmp"))
@@ -156,10 +148,6 @@ following interpretation of the latter three:
   "Execute BODY with *EXPLANATION* bound to EXPLANATION."
   `(let ((*explanation* ,(if (consp explanation) `(list ,@explanation) explanation)))
      ,@body))
-
-(defun execution-output-string (name &rest params)
-  (with-output-to-string (str)
-    (execute-external name params :output str :explanation (when (boundp '*explanation*) *explanation*))))
 
 (define-execute-with-bound-variable *executable-standard-output-direction*
   (:binding unaffected-executable-output t :define-with-maybe-macro t :documentation
