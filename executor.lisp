@@ -22,7 +22,7 @@
 
 (defvar *search-path* #-win32 '(#p"/usr/bin/" #p"/bin/"))
 
-(defparameter *executables* (make-hash-table :test 'eq))
+(defvar *executables* (make-hash-table :test 'eq))
 
 (define-root-container *executables* executable :type pathname)
 
