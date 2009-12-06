@@ -21,20 +21,29 @@
    #:with-dry-execution
    #:execute-external
    #:with-explanation
-   #:*executable-standard-output-direction* #:with-captured-executable-output #:with-unaffected-executable-output #:with-avoided-executable-output
+   #:*executable-standard-output-direction*
+   #:with-avoided-executable-output
+   #:with-captured-executable-output
+   #:with-unaffected-executable-output
+   #:with-maybe-avoided-executable-output
+   #:with-maybe-captured-executable-output
+   #:with-maybe-unaffected-executable-output
    #:with-executable-input-stream
    #:with-input-from-execution
-   #:with-environment #:with-environment-extension
+   #:with-environment
+   #:with-environment-extension
    #:execution-output-string
    #:define-executable
    #:with-valid-exit-codes
    #:with-exit-code-to-error-translation
    #:exit-code-bind
    #:with-shell-predicate
-   #:*execute-asynchronously* #:with-asynchronous-execution
+   #:*execute-asynchronously*
+   #:with-asynchronous-execution
    ;; remote-executor
    #:ssh
    #:compile-shell-command
    #:invoke-with-captured-external-output-and-status
-   #:run-remote-commands #:watch-remote-commands
+   #:run-remote-commands
+   #:watch-remote-commands
    ))

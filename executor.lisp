@@ -67,6 +67,7 @@ Implies *EXECUTE-VERBOSELY*")
         (return-from find-executable (setf (gethash name *executables*) exec-path)))))
   (warn 'executable-not-found :name realname :search-path paths))
 
+
 (defmacro with-dry-execution (&body body)
   "Execute BODY with *EXECUTE-DRYLY* bound to T."
   `(let ((*execute-dryly* t))
@@ -160,20 +161,13 @@ following interpretation of the latter three:
   (with-output-to-string (str)
     (execute-external name params :output str :explanation (when (boundp '*explanation*) *explanation*))))
 
-(defmacro with-unaffected-executable-output (&body body)
-  "Execute BODY without capturing standard output from executables."
-  `(let ((*executable-standard-output-direction* t))
-     ,@body))
-
-(defmacro with-captured-executable-output (&body body)
-  "Execute BODY while capturing standard output from executables."
-  `(let ((*executable-standard-output-direction* :capture))
-     ,@body))
-
-(defmacro with-avoided-executable-output (&body body)
-  "Execute BODY while avoiding standard output from executables."
-  `(let ((*executable-standard-output-direction* nil))
-     ,@body))
+(define-execute-with-bound-variable *executable-standard-output-direction*
+  (:binding unaffected-executable-output t :define-with-maybe-macro t :documentation
+            "Execute BODY without capturing standard output from executables.")
+  (:binding captured-executable-output :capture :define-with-maybe-macro t :documentation
+            "Execute BODY while capturing standard output from executables.")
+  (:binding avoided-executable-output nil :define-with-maybe-macro t :documentation
+            "Execute BODY while avoiding standard output from executables."))
 
 (defmacro with-environment (environment &body body)
   "Execute BODY with process variable environment set to ENVIRONMENT."
