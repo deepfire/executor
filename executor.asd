@@ -1,9 +1,4 @@
-;;; -*- Mode: Lisp -*-
-
-(cl:defpackage :executor.system
-  (:use :cl :asdf))
-
-(cl:in-package :executor.system)
+;;; -*- Mode: Lisp; indent-tabs-mode: nil -*-
 
 (defsystem :executor
   :depends-on (:alexandria :pergamum)
