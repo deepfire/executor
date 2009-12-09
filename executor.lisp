@@ -42,21 +42,22 @@ Implies *EXECUTE-VERBOSELY*")
   ((program :accessor cond-program :initarg :program)
    (parameters :accessor cond-parameters :initarg :parameters)
    (status :accessor cond-status :initarg :status)
+   (working-directory :accessor cond-working-directory :initarg :working-directory)
    (output :accessor cond-output :initarg :output))
-  (:report (program parameters status output)
-           "~@<running ~A~{ ~S~} failed with exit status ~S~:[~;, output:~@:_~:*~@<...~;~A~:@>~]~%~:@>" program parameters status output))
+  (:report (program parameters working-directory status output)
+           "~@<Running ~A~{ ~S~} in working-directory ~S failed with exit status ~S, ~:[~;, output:~%~:*~@<>>>~;~A~:@>~]~:@>" program parameters working-directory status output))
 
 (define-reported-condition executable-not-found (warning)
   ((name :accessor cond-name :initarg :name)
    (search-path :accessor cond-search-path :initarg :search-path))
   (:report (name search-path)
-           "~@<an executable, named ~S, wasn't found in search path ~S~:@>" name search-path))
+           "~@<An executable, named ~S, wasn't found in search path ~S.~:@>" name search-path))
 
 (define-reported-condition required-executable-not-found (error)
   ((name :accessor cond-name :initarg :name)
    (search-path :accessor cond-search-path :initarg :search-path))
   (:report (name search-path)
-           "~@<a required executable, named ~D, wasn't found in search path ~S~:@>" name search-path))
+           "~@<A required executable, named ~D, wasn't found in search path ~S.~:@>" name search-path))
 
 (defun find-executable (name &key (paths *search-path*) &aux (realname (string-downcase (string name))))
   "See if executable with NAME is available in PATHS. When it is, associate NAME with that path and return the latter;
@@ -122,16 +123,18 @@ following interpretation of the latter three:
         (values (cdar valid-exit-codes)
                 (when capturep ""))
         (if wait
-            (let ((exit-code (process-exit-code (spawn-process-from-executable pathname parameters :wait t :input input :output final-output :environment environment))))
+            (let ((working-directory (posix-working-directory))
+                  ;; There's a potential race component here.  Nothing we can deal with, though.
+                  (exit-code (process-exit-code (spawn-process-from-executable pathname parameters :wait t :input input :output final-output :environment environment))))
               (apply #'values
                      (cdr (or (assoc exit-code valid-exit-codes)
                               (let ((error-output (if (or capturep (and (typep final-output 'string-stream) (output-stream-p final-output)))
                                                       (get-output-stream-string final-output) "#<not captured>")))
-                                (if-let ((error (assoc exit-code translated-error-exit-codes)))
-                                  (destructuring-bind (type &rest error-initargs) (rest error)
-                                    (apply #'error type (list* :program pathname :parameters parameters :status exit-code :output error-output
-                                                               error-initargs)))
-                                  (error 'executable-failure :program pathname :parameters parameters :status exit-code :output error-output)))))
+                                (destructuring-bind (type &rest error-initargs) (if-let ((error (assoc exit-code translated-error-exit-codes)))
+                                                                                  (rest error)
+                                                                                  '(executable-failure))
+                                  (apply #'error type (list* :program pathname :parameters parameters :status exit-code :output error-output :working-directory working-directory
+                                                             error-initargs))))))
                      (when capturep
                        (list (get-output-stream-string final-output)))))
             (spawn-process-from-executable pathname parameters :wait nil :input input :output final-output :environment environment)))))
