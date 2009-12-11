@@ -38,7 +38,10 @@ Implies *EXECUTE-EXPLANATORY*.")
 mere printing of their paths and parameters.
 Implies *EXECUTE-VERBOSELY*")
 
-(define-reported-condition executable-failure (error)
+(define-condition executable-condition () ())
+(define-condition executable-error (executable-condition error) ())
+
+(define-reported-condition executable-failure (executable-error)
   ((program :accessor cond-program :initarg :program)
    (parameters :accessor cond-parameters :initarg :parameters)
    (status :accessor cond-status :initarg :status)
@@ -47,13 +50,18 @@ Implies *EXECUTE-VERBOSELY*")
   (:report (program parameters working-directory status output)
            "~@<Running ~A~{ ~S~} in working-directory ~S failed with exit status ~S, ~:[~;, output:~%~:*~@<>>>~;~A~:@>~]~:@>" program parameters working-directory status output))
 
-(define-reported-condition executable-not-found (warning)
+(define-reported-condition missing-executable (executable-error)
+  ((name :accessor cond-name :initarg :name))
+  (:report (name)
+           "~@<Executable named ~S wasn't present on the system.~:@>" name))
+
+(define-reported-condition executable-not-found (executable-condition warning)
   ((name :accessor cond-name :initarg :name)
    (search-path :accessor cond-search-path :initarg :search-path))
   (:report (name search-path)
            "~@<An executable, named ~S, wasn't found in search path ~S.~:@>" name search-path))
 
-(define-reported-condition required-executable-not-found (error)
+(define-reported-condition required-executable-not-found (executable-error)
   ((name :accessor cond-name :initarg :name)
    (search-path :accessor cond-search-path :initarg :search-path))
   (:report (name search-path)
@@ -96,7 +104,8 @@ Implies *EXECUTE-VERBOSELY*")
                          &aux (pathname (etypecase name
                                           (string (find-executable name))
                                           (pathname name)
-                                          (symbol (executable name)))))
+                                          (symbol (or (executable name :if-does-not-exist :continue)
+                                                      (error 'missing-executable :name name))))))
   "Run an external program at PATHNAME with PARAMETERS. 
 Return a value associated with the exit code, by the means of
 VALID-EXIT-CODES, or signal a condition of type EXECUTABLE-FAILURE.

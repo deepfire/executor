@@ -10,8 +10,11 @@
    #:*execute-verbosely*
    #:*execute-dryly*
    ;; conditions
+   #:executable-condition
+   #:executable-error
    #:executable-failure
    #:executable-not-found
+   #:missing-executable
    #:required-executable-not-found
    ;; functions and macros
    #:executable
