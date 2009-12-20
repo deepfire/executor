@@ -132,6 +132,36 @@ Implies *EXECUTE-VERBOSELY*")
 (defun execute-async* (pathname &rest parameters)
   (execute-async pathname parameters))
 
+(defun pipeline (commands &key async)
+  (labels ((rec (commands input)
+             (destructuring-bind (&optional command &rest more-commands) commands
+               (destructuring-bind (&optional pathname &rest parameters) command
+                 (when pathname
+                   (let* ((output (if more-commands
+                                      (make-executable-pipe-stream)
+                                      (interpret-output-stream-designator *output*)))
+                          (process (spawn-process-from-executable
+                                    pathname parameters
+                                    :input input :output output :environment *environment* :wait nil)))
+                     (when more-commands
+                       (close-pipe-write-side output))
+                     (unless (eq input *input*)
+                       (close-pipe-read-side input))
+                     (cons process (rec more-commands output))))))))
+    (when commands
+      (let ((processes (rec commands *input*)))
+        (cond (async
+               processes)
+              (t
+               (process-wait (lastcar processes))
+               (process-exit-code (lastcar processes))))))))
+
+(defun pipeline* (&rest commands)
+  (pipeline commands :async nil))
+
+(defun pipeline-async* (&rest commands)
+  (pipeline commands :async t))
+
 (defun execute-external (name parameters &key (valid-exit-codes (acons 0 t nil)) (wait t) translated-error-exit-codes (output nil) input (environment '("HOME=/tmp"))
                          explanation
                          &aux (pathname (etypecase name

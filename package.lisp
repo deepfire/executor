@@ -25,6 +25,9 @@
    #:execute
    #:execute*
    #:execute-async*
+   #:pipeline
+   #:pipeline*
+   #:pipeline-async*
    ;; functions and macros
    #:executable
    #:find-executable
