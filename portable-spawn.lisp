@@ -22,9 +22,16 @@
   (:use :common-lisp :pergamum)
   (:export
    ;; execution
-   #:spawn-process-from-executable #:process-exit-code #:process-output #:process-wait #:process-alive-p
+   #:spawn-process-from-executable
+   #:process-exit-code
+   #:process-output
+   #:process-wait
+   #:process-alive-p
    ;; pipes
-   #:make-pipe-stream #:with-pipe-stream))
+   #:make-pipe-stream
+   #:close-pipe-read-side
+   #:close-pipe-write-side
+   #:with-pipe-stream))
 
 (cl:in-package :portable-spawn)
 
@@ -78,6 +85,12 @@
   #-(or 
      sbcl)
   (not-implemented 'make-pipe-stream))
+
+(defun close-pipe-read-side (pipe)
+  (close (two-way-stream-input-stream pipe)))
+
+(defun close-pipe-write-side (pipe)
+  (close (two-way-stream-output-stream pipe)))
 
 (defmacro with-pipe-stream ((s &rest make-pipe-stream-args) &body body)
   `(let ((,s (make-pipe-stream ,@make-pipe-stream-args)))
