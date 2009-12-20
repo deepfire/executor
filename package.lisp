@@ -47,6 +47,7 @@
    #:with-environment
    #:with-environment-extension
    #:define-executable
+   #:pipe
    #:with-valid-exit-codes
    #:with-exit-code-to-error-translation
    #:exit-code-bind

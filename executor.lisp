@@ -289,6 +289,10 @@ to finish."
                   :output *executable-standard-output-direction*
                   (when environment (list :environment environment))))))))
 
+(defmacro pipe (&rest commands)
+  `(pipeline (list ,@(loop :for (name . args) :in commands
+                        :collect `(list* (executable ',name) (mapcar #'process-arg (list ,@args)))))))
+
 (defmacro with-valid-exit-codes ((&rest bindings) &body body)
   `(let ((*valid-exit-codes* (list ,@(mapcar (curry #'cons 'cons) bindings))))
      ,@body))
