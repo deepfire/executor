@@ -16,6 +16,15 @@
    #:executable-not-found
    #:missing-executable
    #:required-executable-not-found
+   ;; base
+   #:*stream-element-type*
+   #:*stream-buffering*
+   #:*input*
+   #:*output*
+   #:*environment*
+   #:execute
+   #:execute*
+   #:execute-async*
    ;; functions and macros
    #:executable
    #:find-executable

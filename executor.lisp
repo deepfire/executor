@@ -99,6 +99,39 @@ Implies *EXECUTE-VERBOSELY*")
   process
   output-stream)
 
+(defvar *stream-element-type* 'character)
+(defvar *stream-buffering* :none)
+(defvar *input* nil)
+(defvar *output* t)
+(defvar *environment* '("HOME=/tmp"))
+
+(defun make-executable-pipe-stream (&key (element-type *stream-element-type*) (buffering *stream-buffering*))
+  (make-pipe-stream :element-type element-type :buffering buffering))
+
+(defun interpret-output-stream-designator (stream)
+  (if (eq t stream)
+      *standard-output*
+      stream))
+
+(defun %execute (pathname parameters asyncp)
+  (xform (not asyncp) #'process-exit-code
+         (spawn-process-from-executable pathname parameters :wait (not asyncp)
+                                        :environment *environment*
+                                        :input *input*
+                                        :output (interpret-output-stream-designator *output*))))
+
+(defun execute (pathname parameters)
+  (%execute pathname parameters nil))
+
+(defun execute-async (pathname parameters)
+  (%execute pathname parameters t))
+
+(defun execute* (pathname &rest parameters)
+  (execute pathname parameters))
+
+(defun execute-async* (pathname &rest parameters)
+  (execute-async pathname parameters))
+
 (defun execute-external (name parameters &key (valid-exit-codes (acons 0 t nil)) (wait t) translated-error-exit-codes (output nil) input (environment '("HOME=/tmp"))
                          explanation
                          &aux (pathname (etypecase name
@@ -131,22 +164,25 @@ following interpretation of the latter three:
     (if *execute-dryly*
         (values (cdar valid-exit-codes)
                 (when capturep ""))
-        (if wait
-            (let ((working-directory (posix-working-directory))
-                  ;; There's a potential race component here.  Nothing we can deal with, though.
-                  (exit-code (process-exit-code (spawn-process-from-executable pathname parameters :wait t :input input :output final-output :environment environment))))
-              (apply #'values
-                     (cdr (or (assoc exit-code valid-exit-codes)
-                              (let ((error-output (if (or capturep (and (typep final-output 'string-stream) (output-stream-p final-output)))
-                                                      (get-output-stream-string final-output) "#<not captured>")))
-                                (destructuring-bind (type &rest error-initargs) (if-let ((error (assoc exit-code translated-error-exit-codes)))
-                                                                                  (rest error)
-                                                                                  '(executable-failure))
-                                  (apply #'error type (list* :program pathname :parameters parameters :status exit-code :output error-output :working-directory working-directory
-                                                             error-initargs))))))
-                     (when capturep
-                       (list (get-output-stream-string final-output)))))
-            (spawn-process-from-executable pathname parameters :wait nil :input input :output final-output :environment environment)))))
+        (let ((*input* input)
+              (*output* final-output)
+              (*environment* environment))
+          (if wait
+              (let ((working-directory (posix-working-directory))
+                    ;; There's a potential race component here.  Nothing we can deal with, though.
+                    (exit-code (execute pathname parameters)))
+                (apply #'values
+                       (cdr (or (assoc exit-code valid-exit-codes)
+                                (let ((error-output (if (or capturep (and (typep final-output 'string-stream) (output-stream-p final-output)))
+                                                        (get-output-stream-string final-output) "#<not captured>")))
+                                  (destructuring-bind (type &rest error-initargs) (if-let ((error (assoc exit-code translated-error-exit-codes)))
+                                                                                    (rest error)
+                                                                                    '(executable-failure))
+                                    (apply #'error type (list* :program pathname :parameters parameters :status exit-code :output error-output :working-directory working-directory
+                                                               error-initargs))))))
+                       (when capturep
+                         (list (get-output-stream-string final-output)))))
+              (execute-async pathname parameters))))))
 
 (defvar *valid-exit-codes* nil)
 (defvar *translated-error-exit-codes* nil)
