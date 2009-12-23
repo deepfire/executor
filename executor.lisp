@@ -67,14 +67,21 @@ Implies *EXECUTE-VERBOSELY*")
   (:report (name search-path)
            "~@<A required executable, named ~D, wasn't found in search path ~S.~:@>" name search-path))
 
-(defun find-executable (name &key (paths *search-path*) &aux (realname (string-downcase (string name))))
-  "See if executable with NAME is available in PATHS. When it is, associate NAME with that path and return the latter;
-   otherwise, return NIL."
+(defun find-executable (name &key (if-does-not-exist :warn) (paths *search-path*) &aux (realname (string-downcase (string name))))
+  "See if executable with NAME is available in PATHS. When it is, associate NAME
+with that path and return the latter;  otherwise, proceed according to the value
+of IF-DOES-NOT-EXIST:
+  :CONTINUE - return NIL;
+  :WARN     - signal a warning of type EXECUTABLE-NOT-FOUND;
+  :ERROR    - signal an error of type EXECUTABLE-NOT-FOUND."
   (dolist (path paths)
     (let ((exec-path (subfile path (list realname) #+win32 #+win32 :type "exe")))
       (when (probe-file exec-path) 
         (return-from find-executable (setf (gethash name *executables*) exec-path)))))
-  (warn 'executable-not-found :name realname :search-path paths))
+  (ecase if-does-not-exist
+    (:continue)
+    (:warn (warn 'executable-not-found :name realname :search-path paths))
+    (:error (error 'executable-not-found :name realname :search-path paths))))
 
 
 (defmacro with-dry-execution (&body body)
