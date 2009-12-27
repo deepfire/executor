@@ -21,12 +21,20 @@
 (cl:defpackage #:portable-spawn
   (:use :common-lisp :pergamum)
   (:export
-   ;; execution
+   ;; invocation
    #:spawn-process-from-executable
    #:process-exit-code
    #:process-output
    #:process-wait
    #:process-alive-p
+   #:process-kill
+   #:sighup
+   #:sigint
+   #:sigkill
+   ;; timers
+   #:make-timer
+   #:schedule-timer
+   #:unschedule-timer
    ;; pipes
    #:make-pipe-stream
    #:close-pipe-read-side
@@ -72,6 +80,41 @@
   #-(or
      sbcl)
   (not-implemented 'process-alive-p))
+
+(defconstant sighup 1)
+(defconstant sigint 2)
+(defconstant sigkill 9)
+
+(defun process-kill (process signal)
+  #+sbcl
+  (sb-ext:process-kill process signal)
+  #-(or
+     sbcl)
+  (not-implemented 'process-kill))
+
+;;;
+;;; Timers
+;;;
+(defun make-timer (function &key name)
+  #+sbcl
+  (sb-ext:make-timer function :name name)
+  #-(or
+     sbcl)
+  (not-implemented 'make-timer))
+
+(defun schedule-timer (timer time &key repeat-interval)
+  #+sbcl
+  (sb-ext:schedule-timer timer time :repeat-interval repeat-interval)
+  #-(or
+     sbcl)
+  (not-implemented 'schedule-timer))
+
+(defun unschedule-timer (timer)
+  #+sbcl
+  (sb-ext:unschedule-timer timer)
+  #-(or
+     sbcl)
+  (not-implemented 'unschedule-timer))
 
 ;;;
 ;;; Pipes

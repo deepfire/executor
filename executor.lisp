@@ -111,6 +111,7 @@ of IF-DOES-NOT-EXIST:
 (defvar *input* nil)
 (defvar *output* t)
 (defvar *environment* '("HOME=/tmp"))
+(defvar *time-limit* nil)
 
 (defun make-executable-pipe-stream (&key (element-type *stream-element-type*) (buffering *stream-buffering*))
   (make-pipe-stream :element-type element-type :buffering buffering))
@@ -121,11 +122,24 @@ of IF-DOES-NOT-EXIST:
       stream))
 
 (defun %execute (pathname parameters asyncp)
-  (xform (not asyncp) #'process-exit-code
-         (spawn-process-from-executable pathname parameters :wait (not asyncp)
-                                        :environment *environment*
-                                        :input *input*
-                                        :output (interpret-output-stream-designator *output*))))
+  (let ((process (spawn-process-from-executable pathname parameters :wait nil
+                                                :environment *environment*
+                                                :input *input*
+                                                :output (interpret-output-stream-designator *output*))))
+    (cond (asyncp process)
+          (t
+           (let (timer)
+             (unwind-protect
+                  (progn
+                    (when *time-limit*
+                      (setf timer (schedule-timer
+                                   (make-timer (lambda ()
+                                                 (when (process-alive-p process)
+                                                   (process-kill process sigkill))))
+                                   *time-limit*)))
+                    (process-exit-code (process-wait process)))
+               (when *time-limit*
+                 (unschedule-timer timer))))))))
 
 (defun execute (pathname parameters)
   (%execute pathname parameters nil))
