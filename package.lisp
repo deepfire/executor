@@ -21,6 +21,7 @@
    #:*stream-buffering*
    #:*input*
    #:*output*
+   #:*error*
    #:*environment*
    #:execute
    #:execute*

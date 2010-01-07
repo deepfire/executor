@@ -110,6 +110,7 @@ of IF-DOES-NOT-EXIST:
 (defvar *stream-buffering* :none)
 (defvar *input* nil)
 (defvar *output* t)
+(defvar *error* :output)
 (defvar *environment* '("HOME=/tmp"))
 (defvar *time-limit* nil)
 
@@ -125,7 +126,8 @@ of IF-DOES-NOT-EXIST:
   (let ((process (spawn-process-from-executable pathname parameters :wait nil
                                                 :environment *environment*
                                                 :input *input*
-                                                :output (interpret-output-stream-designator *output*))))
+                                                :output (interpret-output-stream-designator *output*)
+                                                :error *error*)))
     (cond (asyncp process)
           (t
            (let (timer)
@@ -163,7 +165,7 @@ of IF-DOES-NOT-EXIST:
                                       (interpret-output-stream-designator *output*)))
                           (process (spawn-process-from-executable
                                     pathname parameters
-                                    :input input :output output :environment *environment* :wait nil)))
+                                    :input input :output output :error *error* :environment *environment* :wait nil)))
                      (when more-commands
                        (close-pipe-write-side output))
                      (unless (eq input *input*)

@@ -46,9 +46,9 @@
 ;;;
 ;;; Invocation
 ;;;
-(defun spawn-process-from-executable (pathname parameters &key input output environment (wait t))
+(defun spawn-process-from-executable (pathname parameters &key input output error environment (wait t))
   #+sbcl
-  (sb-ext:run-program pathname parameters :input input :output output :environment environment :wait wait)
+  (sb-ext:run-program pathname parameters :input input :output output :error error :environment environment :wait wait)
   #-(or
      sbcl)
   (not-implemented 'spawn-process-from-executable))
