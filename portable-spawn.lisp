@@ -1,6 +1,6 @@
-;;; -*- Mode: LISP; Syntax: COMMON-LISP; Package: EXECUTOR; Base: 10; indent-tabs-mode: nil -*-
+;;; -*- Mode: LISP; Syntax: COMMON-LISP; Package: PORTABLE-SPAWN; Base: 10; indent-tabs-mode: nil; show-trailing-whitespace: t -*-
 ;;;
-;;;  (c) copyright 2009 by
+;;;  (c) copyright 2009-2010 by
 ;;;           Samium Gromoff (_deepfire@feelingofgreen.ru)
 ;;;
 ;;; This library is free software; you can redistribute it and/or
@@ -24,7 +24,9 @@
    ;; invocation
    #:spawn-process-from-executable
    #:process-exit-code
-   #:process-output
+   #:process-input-stream
+   #:process-output-stream
+   #:process-error-stream
    #:process-wait
    #:process-alive-p
    #:process-kill
@@ -49,36 +51,79 @@
 (defun spawn-process-from-executable (pathname parameters &key input output error environment (wait t))
   #+sbcl
   (sb-ext:run-program pathname parameters :input input :output output :error error :environment environment :wait wait)
+  #+ccl
+  (ccl:run-program pathname parameters :input input :output output :error error :env environment :wait wait)
   #-(or
-     sbcl)
+     sbcl
+     ccl
+     )
   (not-implemented 'spawn-process-from-executable))
 
 (defun process-exit-code (process)
   #+sbcl
   (sb-ext:process-exit-code process)
+  #+ccl
+  (not (eq :exited (ccl:external-process-status process)))
   #-(or
-     sbcl)
+     sbcl
+     ccl
+     )
   (not-implemented 'process-exit-code))
 
-(defun process-output (process)
+(defun process-input-stream (process)
+  #+sbcl
+  (sb-ext:process-input process)
+  #+ccl
+  (ccl:external-process-input-stream process)
+  #-(or
+     sbcl
+     ccl
+     )
+  (not-implemented 'process-input-stream))
+
+(defun process-output-stream (process)
   #+sbcl
   (sb-ext:process-output process)
+  #+ccl
+  (ccl:external-process-output-stream process)
   #-(or
-     sbcl)
-  (not-implemented 'process-output))
+     sbcl
+     ccl
+     )
+  (not-implemented 'process-output-stream))
+
+(defun process-error-stream (process)
+  #+sbcl
+  (sb-ext:process-error process)
+  #+ccl
+  (ccl:external-process-error-stream process)
+  #-(or
+     sbcl
+     ccl
+     )
+  (not-implemented 'process-error-stream))
 
 (defun process-wait (process)
   #+sbcl
   (sb-ext:process-wait process t)
+  #+ccl
+  (ccl:external-process-wait process t)
   #-(or
-     sbcl)
+     sbcl
+     ccl
+     )
   (not-implemented 'process-wait))
 
 (defun process-alive-p (process)
   #+sbcl
   (sb-ext:process-alive-p process)
+  #+ccl
+  (multiple-value-bind (status code) (ccl:external-process-status process)
+    (member status '(:stopped :running)))
   #-(or
-     sbcl)
+     sbcl
+     ccl
+     )
   (not-implemented 'process-alive-p))
 
 (defconstant sighup 1)
@@ -88,8 +133,12 @@
 (defun process-kill (process signal)
   #+sbcl
   (sb-ext:process-kill process signal)
+  #+ccl
+  (ccl:signal-external-process process signal)
   #-(or
-     sbcl)
+     sbcl
+     ccl
+     )
   (not-implemented 'process-kill))
 
 ;;;
@@ -99,21 +148,24 @@
   #+sbcl
   (sb-ext:make-timer function :name name)
   #-(or
-     sbcl)
+     sbcl
+     )
   (not-implemented 'make-timer))
 
 (defun schedule-timer (timer time &key repeat-interval)
   #+sbcl
   (sb-ext:schedule-timer timer time :repeat-interval repeat-interval)
   #-(or
-     sbcl)
+     sbcl
+     )
   (not-implemented 'schedule-timer))
 
 (defun unschedule-timer (timer)
   #+sbcl
   (sb-ext:unschedule-timer timer)
   #-(or
-     sbcl)
+     sbcl
+     )
   (not-implemented 'unschedule-timer))
 
 ;;;
@@ -126,7 +178,8 @@
      (sb-sys:make-fd-stream r :input t :element-type element-type :external-format external-format :buffering buffering)
      (sb-sys:make-fd-stream w :output t :element-type element-type :external-format external-format :buffering buffering)))
   #-(or 
-     sbcl)
+     sbcl
+     )
   (not-implemented 'make-pipe-stream))
 
 (defun close-pipe-read-side (pipe)

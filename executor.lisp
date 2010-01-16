@@ -102,10 +102,6 @@ of IF-DOES-NOT-EXIST:
      (declare (special *execute-explanatory*))
      ,@body))
 
-(defstruct process
-  process
-  output-stream)
-
 (defvar *stream-element-type* 'character)
 (defvar *stream-buffering* :none)
 (defvar *input* nil)
