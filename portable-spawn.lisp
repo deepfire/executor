@@ -64,13 +64,16 @@
   #-(or
      sbcl
      ccl
+     ecl
      )
   (not-implemented 'spawn-process-from-executable)
   (let ((environment (normalise-environment environment)))
     #+sbcl
-    (sb-ext:run-program pathname parameters :input input :output output :error error :environment environment :wait wait)
-    #+ccl
-    (ccl:run-program pathname parameters :input input :output output :error error :env environment :wait wait)))
+    (sb-ext:run-program pathname parameters :wait wait :input input :output output :error error :environment environment)
+    #+ccl                                             
+    (ccl:run-program    pathname parameters :wait wait :input input :output output :error error :env environment)
+    #+ecl                                             
+    (ext:run-program    pathname parameters :wait wait :input input :output output :error error                 )))
 
 (defun process-exit-code (process)
   #+sbcl
@@ -164,9 +167,12 @@
   (sb-posix:getenv name)
   #+ccl
   (ccl:getenv name)
+  #+ecl
+  (si:getenv name)
   #-(or
      sbcl
      ccl
+     ecl
      )
   (not-implemented 'getenv))
 
@@ -175,9 +181,12 @@
   (sb-posix:putenv (concatenate 'string name "=" value))
   #+ccl
   (ccl:setenv name value t)
+  #+ecl
+  (si:setenv name value)
   #-(or
      sbcl
      ccl
+     ecl
      )
   (not-implemented 'setenv))
 
@@ -217,8 +226,17 @@
     (make-two-way-stream
      (sb-sys:make-fd-stream r :input t :element-type element-type :external-format external-format :buffering buffering)
      (sb-sys:make-fd-stream w :output t :element-type element-type :external-format external-format :buffering buffering)))
+  #+ecl
+  (si:make-pipe)
+  #+ccl
+  (multiple-value-bind (r w) (ccl::pipe)
+    (make-two-way-stream
+     (ccl::make-fd-stream r :direction :input  :element-type element-type :encoding (ccl::external-format-character-encoding external-format) :buffering buffering)
+     (ccl::make-fd-stream w :direction :output :element-type element-type :encoding (ccl::external-format-character-encoding external-format) :buffering buffering)))
   #-(or 
      sbcl
+     ecl
+     ccl
      )
   (not-implemented 'make-pipe-stream))
 
