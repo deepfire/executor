@@ -135,7 +135,8 @@ of IF-DOES-NOT-EXIST:
                                                  (when (process-alive-p process)
                                                    (process-kill process sigkill))))
                                    *time-limit*)))
-                    (process-exit-code (process-wait process)))
+                    (process-wait process)
+                    (process-exit-code process))
                (when *time-limit*
                  (unschedule-timer timer))))))))
 

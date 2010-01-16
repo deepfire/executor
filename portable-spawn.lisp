@@ -51,22 +51,34 @@
 ;;;
 ;;; Invocation
 ;;;
+(defun normalise-environment (environment)
+  (loop :for entry :in environment
+     :collect (etypecase entry
+                (cons   #+sbcl (concatenate 'string (car entry) "=" (cdr entry))
+                        #+ccl entry)
+                (string #+sbcl entry
+                        #+ccl (let ((=posn (position #\= entry)))
+                                (cons (subseq entry 0 =posn) (subseq entry (1+ =posn))))))))
+
 (defun spawn-process-from-executable (pathname parameters &key input output error environment (wait t))
-  #+sbcl
-  (sb-ext:run-program pathname parameters :input input :output output :error error :environment environment :wait wait)
-  #+ccl
-  (ccl:run-program pathname parameters :input input :output output :error error :env environment :wait wait)
   #-(or
      sbcl
      ccl
      )
-  (not-implemented 'spawn-process-from-executable))
+  (not-implemented 'spawn-process-from-executable)
+  (let ((environment (normalise-environment environment)))
+    #+sbcl
+    (sb-ext:run-program pathname parameters :input input :output output :error error :environment environment :wait wait)
+    #+ccl
+    (ccl:run-program pathname parameters :input input :output output :error error :env environment :wait wait)))
 
 (defun process-exit-code (process)
   #+sbcl
   (sb-ext:process-exit-code process)
   #+ccl
-  (not (eq :exited (ccl:external-process-status process)))
+  (multiple-value-bind (status code) (ccl:external-process-status process)
+    (when (eq :exited status)
+      code))
   #-(or
      sbcl
      ccl
@@ -110,7 +122,7 @@
   #+sbcl
   (sb-ext:process-wait process t)
   #+ccl
-  (ccl:external-process-wait process t)
+  (ccl::external-process-wait process t)
   #-(or
      sbcl
      ccl
@@ -122,7 +134,7 @@
   (sb-ext:process-alive-p process)
   #+ccl
   (multiple-value-bind (status code) (ccl:external-process-status process)
-    (member status '(:stopped :running)))
+    (member status '(:stopped :running))) ; That is, not one of :EXITED or :SIGNALED
   #-(or
      sbcl
      ccl
