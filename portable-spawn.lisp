@@ -33,6 +33,9 @@
    #:sighup
    #:sigint
    #:sigkill
+   ;; environment
+   #:getenv
+   #:setenv
    ;; timers
    #:make-timer
    #:schedule-timer
@@ -140,6 +143,31 @@
      ccl
      )
   (not-implemented 'process-kill))
+
+;;;
+;;; Environment
+;;;
+(defun getenv (name)
+  #+sbcl
+  (sb-posix:getenv name)
+  #+ccl
+  (ccl:getenv name)
+  #-(or
+     sbcl
+     ccl
+     )
+  (not-implemented 'getenv))
+
+(defun setenv (name value)
+  #+sbcl
+  (sb-posix:putenv (concatenate 'string name "=" value))
+  #+ccl
+  (ccl:setenv name value t)
+  #-(or
+     sbcl
+     ccl
+     )
+  (not-implemented 'setenv))
 
 ;;;
 ;;; Timers
