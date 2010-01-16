@@ -65,15 +65,18 @@
      sbcl
      ccl
      ecl
+     clisp
      )
   (not-implemented 'spawn-process-from-executable)
   (let ((environment (normalise-environment environment)))
     #+sbcl
-    (sb-ext:run-program pathname parameters :wait wait :input input :output output :error error :environment environment)
-    #+ccl                                             
-    (ccl:run-program    pathname parameters :wait wait :input input :output output :error error :env environment)
-    #+ecl                                             
-    (ext:run-program    pathname parameters :wait wait :input input :output output :error error                 )))
+    (sb-ext:run-program pathname parameters            :wait wait :input input :output output :error error :environment environment)
+    #+ccl
+    (ccl:run-program    pathname parameters            :wait wait :input input :output output :error error :env environment)
+    #+ecl
+    (ext:run-program    pathname parameters            :wait wait :input input :output output :error error                 )
+    #+clisp
+    (ext:run-program    pathname :arguments parameters :wait wait :input input :output output                              )))
 
 (defun process-exit-code (process)
   #+sbcl
@@ -169,10 +172,13 @@
   (ccl:getenv name)
   #+ecl
   (si:getenv name)
+  #+clisp
+  (ext:getenv name)
   #-(or
      sbcl
      ccl
      ecl
+     clisp
      )
   (not-implemented 'getenv))
 
@@ -183,10 +189,13 @@
   (ccl:setenv name value t)
   #+ecl
   (si:setenv name value)
+  #+clisp
+  (setf (ext:getenv name) value)
   #-(or
      sbcl
      ccl
      ecl
+     clisp
      )
   (not-implemented 'setenv))
 
