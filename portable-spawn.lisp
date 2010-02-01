@@ -74,7 +74,9 @@
     #+ccl
     (ccl:run-program    pathname parameters            :wait wait :input input :output output :error error :env environment)
     #+ecl
-    (ext:run-program    pathname parameters            :wait wait :input input :output output :error error                 )
+    (nth-value
+     2
+     (ext:run-program   pathname parameters            :wait wait :input input :output output :error error :environ environment))
     #+clisp
     (ext:run-program    pathname :arguments parameters :wait wait :input input :output output                              )))
 
@@ -85,9 +87,14 @@
   (multiple-value-bind (status code) (ccl:external-process-status process)
     (when (eq :exited status)
       code))
+  #+ecl
+  (multiple-value-bind (status code) (ext:external-process-status process)
+    (when (eq :exited status)
+      code))
   #-(or
      sbcl
      ccl
+     ecl
      )
   (not-implemented 'process-exit-code))
 
@@ -96,9 +103,12 @@
   (sb-ext:process-input process)
   #+ccl
   (ccl:external-process-input-stream process)
+  #+ecl
+  (ext:external-process-input process)
   #-(or
      sbcl
      ccl
+     ecl
      )
   (not-implemented 'process-input-stream))
 
@@ -107,9 +117,12 @@
   (sb-ext:process-output process)
   #+ccl
   (ccl:external-process-output-stream process)
+  #+ecl
+  (ext:external-process-output process)
   #-(or
      sbcl
      ccl
+     ecl
      )
   (not-implemented 'process-output-stream))
 
@@ -129,9 +142,12 @@
   (sb-ext:process-wait process t)
   #+ccl
   (ccl::external-process-wait process t)
+  #+ecl
+  (ext:external-process-wait process t)
   #-(or
      sbcl
      ccl
+     ecl
      )
   (not-implemented 'process-wait))
 
@@ -141,6 +157,8 @@
   #+ccl
   (multiple-value-bind (status code) (ccl:external-process-status process)
     (member status '(:stopped :running))) ; That is, not one of :EXITED or :SIGNALED
+  #+ecl
+  (member (ext::external-process-%status) '(:stopped :running))
   #-(or
      sbcl
      ccl
@@ -242,7 +260,7 @@
     (make-two-way-stream
      (ccl::make-fd-stream r :direction :input  :element-type element-type :encoding (ccl::external-format-character-encoding external-format) :buffering buffering)
      (ccl::make-fd-stream w :direction :output :element-type element-type :encoding (ccl::external-format-character-encoding external-format) :buffering buffering)))
-  #-(or 
+  #-(or
      sbcl
      ecl
      ccl
