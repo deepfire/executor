@@ -70,15 +70,15 @@
   (not-implemented 'spawn-process-from-executable)
   (let ((environment (normalise-environment environment)))
     #+sbcl
-    (sb-ext:run-program pathname parameters            :wait wait :input input :output output :error error :environment environment)
+    (sb-ext:run-program pathname parameters             :wait wait :input input :output output :error error :environment environment)
     #+ccl
-    (ccl:run-program    pathname parameters            :wait wait :input input :output output :error error :env environment)
+    (ccl:run-program    pathname parameters             :wait wait :input input :output output :error error :env environment)
     #+ecl
     (nth-value
      2
-     (ext:run-program   pathname parameters            :wait wait :input input :output output :error error :environ environment))
+     (ext:run-program (namestring pathname) parameters  :wait wait :input input :output output :error error :environ environment))
     #+clisp
-    (ext:run-program    pathname :arguments parameters :wait wait :input input :output output                              )))
+    (ext:run-program    pathname :arguments parameters  :wait wait :input input :output output                              )))
 
 (defun process-exit-code (process)
   #+sbcl
