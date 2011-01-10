@@ -286,7 +286,7 @@ to finish."
 (defmacro define-executable (name &key may-want-display fixed-environment)
   (destructuring-bind (function-name &optional (executable-name function-name)) (ensure-cons name)
     `(defun ,function-name (&rest parameters)
-       (let ((environment ,(if fixed-environment `(list ,@fixed-environment) '*environment*)))
+       (let ((environment ,(if fixed-environment `(remove nil (list ,@fixed-environment)) '*environment*)))
          (with-retry-restarts ((retry () :report "Retry execution of the external program.")
                                (accept () :report "Accept results of external program execution as successful. Return T."
                                        (return-from ,function-name t))
