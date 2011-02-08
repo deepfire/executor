@@ -37,14 +37,9 @@
    #:with-dry-execution
    #:execute-external
    #:with-explanation
-   #:*executable-standard-output-direction*
-   #:with-avoided-executable-output
-   #:with-captured-executable-output
-   #:with-unaffected-executable-output
-   #:with-maybe-avoided-executable-output
-   #:with-maybe-captured-executable-output
-   #:with-maybe-unaffected-executable-output
-   #:with-executable-input-stream
+   #:*executable-standard-input*
+   #:*executable-standard-output*
+   #:*executable-error-output*
    #:with-environment
    #:with-environment-extension
    #:define-executable
@@ -55,6 +50,7 @@
    #:with-shell-predicate
    #:*execute-asynchronously*
    #:with-asynchronous-execution
+   #:with-executable-options
    ;; remote-executor
    #:ssh
    #:compile-shell-command
