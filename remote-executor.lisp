@@ -35,7 +35,7 @@
          condition
          (output
           (with-output-to-string (capture)
-            (let ((*executable-standard-output-direction* capture))
+            (let ((*executable-standard-output* capture))
               (handler-case (setf status (funcall external-invocation-fn))
                 (serious-condition (c)
                   (setf condition c)))
@@ -48,13 +48,13 @@
         condition)
     (let ((output
            (with-output-to-string (capture)
-             (let ((*executable-standard-output-direction* capture)
+             (let ((*executable-standard-output* capture)
                    (commands (compile-shell-command commands)))
                (when verbose
                  (format t "~@<;;; ~@;executing following commands as user \"~A\" on ~A:~%~A~:@>~%" username hostname commands))
                (handler-case
                    (setf successp (with-input-from-string (stream commands)
-                                    (with-executable-input-stream stream
+                                    (let ((*executable-standard-input* stream))
                                       (ssh `(,username "@" ,hostname) "bash" "-s"))))
                  (serious-condition (c)
                    (setf condition c)))
@@ -73,15 +73,14 @@
     (let ((output
            (with-output-to-string (capture)
              (with-pipe-stream (pipe :element-type 'character :buffering :none)
-               (let ((*executable-standard-output-direction* pipe)
+               (let ((*executable-standard-output* pipe)
                      (commands (compile-shell-command commands)))
                  (when verbose
                    (format t "~&~@<;;; ~@;executing following commands as user \"~A\" on ~A:~%~A~:@>~%" username hostname commands))
                  (handler-case
-                     (let ((process (with-asynchronous-execution
-                                      (with-input-from-string (stream commands)
-                                        (with-executable-input-stream stream
-                                          (ssh `(,username "@" ,hostname) "bash" "-s"))))))
+                     (let ((process (with-input-from-string (stream commands)
+                                      (with-executable-options (:input stream :asynchronous t)
+                                        (ssh `(,username "@" ,hostname) "bash" "-s")))))
                        (declare (ignore process))
                        (close (two-way-stream-output-stream pipe))
                        (loop :for line = (read-line pipe nil nil)
