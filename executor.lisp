@@ -247,7 +247,8 @@ following interpretation of the latter three:
               (*executable-error-output*    error)
               (*environment*                environment))
           (if wait
-              (let ((working-directory (posix-working-directory))
+              (let ((working-directory (or (ignore-errors (posix-working-directory))
+                                           "Error getting current working directory."))
                     ;; There's a potential race component here.  Nothing we can deal with, though.
                     (exit-code (execute pathname parameters)))
                 (apply #'values
@@ -257,8 +258,10 @@ following interpretation of the latter three:
                                   (destructuring-bind (type &rest error-initargs) (if-let ((error (assoc exit-code translated-error-exit-codes)))
                                                                                     (rest error)
                                                                                     '(executable-failure))
-                                    (apply #'error type (list* :program pathname :parameters parameters :status exit-code :output error-output :working-directory working-directory
-                                                               error-initargs))))))
+                                    (apply #'error type
+                                           (list* :program pathname :parameters parameters :status exit-code
+                                                  :output error-output :working-directory working-directory
+                                                  error-initargs))))))
                        (when capturep
                          (list (get-output-stream-string final-output)))))
               (execute-async pathname parameters))))))
