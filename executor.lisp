@@ -176,21 +176,22 @@
 
 (define-root-container *executables* executable :type pathname)
 
-(defun find-executable (name &key (if-does-not-exist :warn) (paths *search-path*) &aux (realname (string-downcase (string name))))
+(defun find-executable (name &key (use-cache t) (if-does-not-exist :warn) (paths *search-path*) &aux (realname (string-downcase (string name))))
   "See if executable with NAME is available in PATHS. When it is, associate NAME
 with that path and return the latter;  otherwise, proceed according to the value
 of IF-DOES-NOT-EXIST:
   :CONTINUE - return NIL;
   :WARN     - signal a warning of type EXECUTABLE-NOT-FOUND;
   :ERROR    - signal an error of type EXECUTABLE-NOT-FOUND."
-  (dolist (path paths)
-    (let ((exec-path (subfile path (list realname) #+win32 #+win32 :type "exe")))
-      (when (probe-file exec-path) 
-        (return-from find-executable (setf (gethash name *executables*) exec-path)))))
-  (ecase if-does-not-exist
-    (:continue)
-    (:warn (warn 'executable-not-found :name realname :search-path paths))
-    (:error (error 'executable-not-found :name realname :search-path paths))))
+  (or (when use-cache
+        (gethash name *executables*))
+      (flet ((qualify-path (x) (subfile x (list realname) #+win32 #+win32 :type "exe")))
+        (when-let ((exec-path (find-if (compose #'probe-file #'qualify-path) paths)))
+          (setf (gethash name *executables*) (qualify-path exec-path))))
+      (ecase if-does-not-exist
+        (:continue)
+        (:warn (warn 'executable-not-found :name realname :search-path paths))
+        (:error (error 'executable-not-found :name realname :search-path paths)))))
 
 ;;; Dryness, verbosity and explanation toggles
 (defvar *execute-explanatory* nil
