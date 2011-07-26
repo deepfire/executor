@@ -343,7 +343,7 @@ to finish."
                                                 (push (concatenate 'string "DISPLAY=" display) environment)))))
            (execute-external ',executable-name (mapcar #'process-arg parameters)
                              :explanation (when (boundp '*explanation*) *explanation*)
-                             :valid-exit-codes (acons 0 t *valid-exit-codes*)
+                             :valid-exit-codes (append *valid-exit-codes* (list (cons 0 t)))
                              :translated-error-exit-codes *translated-error-exit-codes*
                              :wait (not *execute-asynchronously*)
                              :input *executable-standard-input*
