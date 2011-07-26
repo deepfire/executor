@@ -211,7 +211,7 @@ Implies *EXECUTE-VERBOSELY*")
 (define-binder with-dry-execution       *execute-dryly*       :fixed-value t)
 
 (defun execute-external (name parameters &key (valid-exit-codes (acons 0 t nil)) (wait t) translated-error-exit-codes
-                         input (output nil) error (environment '("HOME=/tmp"))
+                         input (output nil) error (environment *environment*)
                          explanation
                          &aux (pathname (etypecase name
                                           (string (find-executable name))
@@ -341,15 +341,15 @@ to finish."
                                                                (finish-output *query-io*)
                                                                (list (read-line *query-io*)))
                                                 (push (concatenate 'string "DISPLAY=" display) environment)))))
-           (apply #'execute-external ',executable-name (mapcar #'process-arg parameters)
-                  :explanation (when (boundp '*explanation*) *explanation*)
-                  :valid-exit-codes (acons 0 t *valid-exit-codes*)
-                  :translated-error-exit-codes *translated-error-exit-codes*
-                  :wait (not *execute-asynchronously*)
-                  :input *executable-standard-input*
-                  :output *executable-standard-output*
-                  :error *executable-error-output*
-                  (when environment (list :environment environment))))))))
+           (execute-external ',executable-name (mapcar #'process-arg parameters)
+                             :explanation (when (boundp '*explanation*) *explanation*)
+                             :valid-exit-codes (acons 0 t *valid-exit-codes*)
+                             :translated-error-exit-codes *translated-error-exit-codes*
+                             :wait (not *execute-asynchronously*)
+                             :input *executable-standard-input*
+                             :output *executable-standard-output*
+                             :error *executable-error-output*
+                             :environment environment))))))
 
 ;;;
 ;;; Bind them all.
